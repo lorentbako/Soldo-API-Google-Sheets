@@ -1,0 +1,27 @@
+<label for="card-delete-dd">Choose a Card:</label>
+<select class="form-control" name="card-delete-dd" id="card-delete-dd"></select>
+<br>
+<button onclick="deleteCardSelected()" type="button" class="btn btn-outline-danger">Delete Card</button>
+<br>
+<p id='card-deleted-status'></p>
+<script>
+  // DELETE CARD
+  function deleteCardSelected(){
+    const cardToDelete = $("#card-delete-dd")
+    const deletedCardStatus =  $('#card-deleted-status')
+    const cardDeleteID = cardToDelete.val()
+    deletedCardStatus.html('Deleting Card...')
+
+    //Deleting card by it's id.
+    google.script.run.withSuccessHandler(updateDeletedStatus).deleteCard(cardDeleteID)
+
+    function updateDeletedStatus(status){
+      if(status){
+        deletedCardStatus.html('Card deleted')
+        google.script.run.getSoldoCards()
+      } else {
+        deletedCardStatus.html('Card deleted FAILED')
+      }
+  }
+  }
+</script>
