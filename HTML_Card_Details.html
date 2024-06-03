@@ -1,0 +1,65 @@
+<label for="cards-create-dd">Choose a card:</label>
+<select class="form-control" name="cards-create-dd" id="cards-create-dd"></select>
+<br>
+<button onclick="decryptData()" type="button" class="btn btn-outline-info">Show Card Details</button>
+<p id="loading">Loading...</p>
+<div id="cardContainer">
+  <p onclick="copyText('maskedPan')" id="maskedPan"></p>
+  <p onclick="copyText('expire')" id="expire"></p>
+  <p onclick="copyText('cvv')" id="cvv"></p>
+  <img onclick="copyText('cardContainer')"
+    id='copy-all-cc-details'
+    src="https://w7.pngwing.com/pngs/232/288/png-transparent-computer-icons-symbol-cut-copy-and-paste-symbol-miscellaneous-text-multiple-thumbnail.png"
+    width="15px"
+    height="15px"
+  ></img>
+</div>
+<script>
+  function copyText(elementId) {
+    let textToCopyEl = $(`#${elementId}`)
+    let textValue = textToCopyEl.text()
+    if(elementId==='expire'||elementId==='cvv'){
+        textValue= textValue.split(" ")[1]
+      }
+    navigator.clipboard.writeText(textValue);
+    } 
+
+  // GETTING THE CARD DETAILS
+  let loading = $("#loading")
+  let cardContainer = $('#cardContainer')
+
+  function decryptData() {
+  var dropdown = $("#cards-create-dd");
+  var selectedCardIdValue = dropdown.val();
+
+  loading.show();
+  cardContainer.hide();
+
+  google.script.run.withSuccessHandler(decryptValue).getValueFromSheet(selectedCardIdValue);
+  }
+
+  function decryptValue(cardDetails) {
+  var privateKeyPem = JSON.parse(JSON.stringify(cardDetails.privateKeyPem));
+  var privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
+  //decrypt full pan
+  var fullPan = privateKey.decrypt(forge.util.decode64(cardDetails.maskedPan), 'RSA-OAEP', {
+  md: forge.md.sha256.create(),
+  mgf1: {
+  md: forge.md.sha256.create()
+  }
+  });
+  //decrypt CVV
+  var fullCvv = privateKey.decrypt(forge.util.decode64(cardDetails.cvv), 'RSA-OAEP', {
+  md: forge.md.sha256.create(),
+  mgf1: {
+  md: forge.md.sha256.create()
+  }
+  });
+  loading.hide()
+  cardContainer.css({'display':"flex"});
+
+  $("#maskedPan").text(fullPan);
+  $("#expire").text(`EXP ${cardDetails.expireDate}`);
+  $("#cvv").text(`CVV ${fullCvv}`);
+  }
+</script>
