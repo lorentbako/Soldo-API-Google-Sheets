@@ -1,0 +1,66 @@
+<script defer>
+  // POPULATE DROPDOWNS IN THE PAGES
+  let usersImported = [];
+  let walletsImported = [];
+  function populateDropdown() {
+  google.script.run.withSuccessHandler(updateDropdown).getDropdownValues();
+  }
+  
+  function updateDropdown(columnValues) {
+  const createDropdown = $("#cards-create-dd");
+  const lockDropdown = $("#cards-lock-dd");
+  const deleteDropdown = $("#card-delete-dd");
+  const updateCardDropdown = $("#card-update-dd");
+  const countryDropdown = $("#cards-country-dd");
+  const userCardAssign = $("#user-assing-dd");
+  const userDetailsDropdown = $("#user-details-dd");
+  const userDeleteDropdown = $("#user-delete-dd");
+  const userEditDropdown = $("#user-edit-dd")
+
+  var [CARDS, WALLETS, USERS] = columnValues;
+  usersImported = USERS;
+  walletsImported = WALLETS;
+
+  CARDS.forEach(function(card) {
+  let createOption = document.createElement("option");
+  let lockOption = document.createElement("option");
+  let deleteOption = document.createElement("option");
+  let updateOption = document.createElement("option");
+  let countryOption = document.createElement("option");
+
+  createOption.value = lockOption.value = deleteOption.value = updateOption.value = countryOption.value = card.id;
+  createOption.textContent = lockOption.textContent = deleteOption.textContent = updateOption.textContent = countryOption.textContent= card.name;
+  
+  createDropdown.append(createOption);
+  lockDropdown.append(lockOption);
+  deleteDropdown.append(deleteOption)
+  countryDropdown.append(countryOption)
+  // card.owner === 'company' ? updateCardDropdown.append(updateOption):''
+  updateCardDropdown.append(updateOption)
+  });
+
+  let usersSelect = $("#users-create-card-dd");
+  WALLETS.forEach(function(walletInfo) {
+    let wallet = document.createElement('option');
+    wallet.value = walletInfo.walletId;
+    wallet.textContent = walletInfo.name;
+    usersSelect.append(wallet)
+  })
+  USERS.forEach(function(userInfo) {
+    let userAssign = document.createElement('option');
+    let userDetails = document.createElement('option');
+    let userDelete = document.createElement('option');
+    let userEdit = document.createElement('option');
+
+    userAssign.value = userDetails.value = userDelete.value = userEdit.value = userInfo.userId;
+    userAssign.textContent = userDetails.textContent = userDelete.textContent = userEdit.textContent = `${userInfo.name} (${userInfo.email})`;
+
+    userCardAssign.append(userAssign)
+    userDetailsDropdown.append(userDetails)
+    userDeleteDropdown.append(userDelete)
+    userEditDropdown.append(userEdit)
+  })
+  }
+  // Populate the dropdowns when the page loads
+  window.addEventListener("DOMContentLoaded", populateDropdown);
+</script>
