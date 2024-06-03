@@ -1,0 +1,34 @@
+<label for="cards-lock-dd">Choose a card:</label>
+<select  class="form-control" name="cards-lock-dd" id="cards-lock-dd" onchange="cardStatus()"></select>
+<br>
+<p id='card-locked-status'> </p>
+<button type="button" style="display: none" id="lockButton" onclick="handleStatusChange()"></button>
+<script>
+  let cardLockedStatus = $('#card-locked-status')
+  let lockButton = $('#lockButton')
+  let lockDropdown = $("#cards-lock-dd");
+  // Getting card status if its locked or active.
+  function cardStatus(){
+  lockButton.hide()
+  cardLockedStatus.html('Getting card status...')
+  let selectedCardId = lockDropdown.val();
+
+  google.script.run.withSuccessHandler(cardStatusValue).getCardRules(selectedCardId)
+  
+  function cardStatusValue(cardRules){
+    const cardStatus = cardRules[1].enabled
+    cardLockedStatus.html(`Card is currently: ${!cardStatus ? 'Locked' : 'Active'}`)
+    lockButton.html(!cardStatus ? 'Unlock Card' : 'Lock Card')
+    lockButton.removeClass()
+    lockButton.addClass(`btn btn-outline-${!cardStatus ? 'info' : 'danger'}`)
+    lockButton.css("display",'inline-block')
+    }
+  }
+  // Locking or unlocking card.
+  function handleStatusChange(status){
+  let selectedCardIdLock = lockDropdown.val();
+  cardLockedStatus.html('Updating card status...')
+  lockButton.hide()
+  google.script.run.withSuccessHandler(cardStatus).updateCardRule(selectedCardIdLock,lockButton.text())
+  }
+</script>
