@@ -1,6 +1,9 @@
 
 <h1>Project Description</h1>
 
+<h2>Note</h2>
+<i><p>(If you want access to files "API AdvancedAuthorize.gs", "API BasicAuthorizeToken.gs" and "API Fingerprint.gs" contact me at  <a href="https://www.linkedin.com/in/lorentbako">LinkedIn </a>)</p></i>
+
 <h2>Overview</h2>
 <p>This project uses the Soldo API to bring a wide range of features into Google Sheets. This allows users to manage their Soldo account directly from Google Sheets, making it easier to handle cards, users, transactions, and more.</p>
 
