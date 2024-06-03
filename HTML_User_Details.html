@@ -1,0 +1,57 @@
+<style>
+  .row-user-detail {
+    margin: 0;
+  }
+</style>
+<label for="user-details-dd">Choose a User:</label>
+<select class="form-control" name="user-details-dd" id="user-details-dd"></select>
+<br>
+<button onclick="getSelectedUserDetails()" type="button" class="btn btn-outline-info">Show User Details</button>
+<div id="all-user-details"></div>
+<p id="loading-user-details" style="display:none">Loading...</p>
+
+
+<script>
+  const selectedUser = $("#user-details-dd");
+  const userDetailsLoading = $("#loading-user-details");
+  const allUserDetails = $("#all-user-details")
+
+  function getSelectedUserDetails(){
+    const userId = selectedUser.val()
+    const regexUserId = /^[A-Z]{4}\d{4}-\d{6}$/
+    console.log(regexUserId.test(userId))
+    if(!regexUserId.test(userId)){
+      userDetailsLoading.css('display','block')
+      userDetailsLoading.text("Please select a Valid User!")
+      setTimeout(()=>userDetailsLoading.hide(),2500)
+      return
+    }
+    userDetailsLoading.show()
+    google.script.run.withSuccessHandler(userDetailsRetrieved).getUser(userId)
+
+    function userDetailsRetrieved(userDetails){
+      const usefulDetails = {
+      "name": "Name: ",
+      "surname": "Last Name: ",
+      "creation_time": "Created: ",
+      "mobile": "Mobile Nr.: ",
+      "dob": "Birthday: ",
+      "job_title": "Job Title: ",
+      "email": "E-Mail: ",
+      "web_access": "Web Access: ",
+      "mobile_access": "Mobile Access: ",
+      "status": "Status: ",
+      "test":"test"
+    }
+      for(const [key, value] of Object.entries(usefulDetails)){
+        if(userDetails[key]){
+          let rowDetail = document.createElement('p')
+          rowDetail.innerHTML = `<span>${value}</span><span><i>${userDetails[key]}</i></span>`
+          rowDetail.classList.add("row-user-detail")
+          allUserDetails.append(rowDetail)
+        }
+      }
+    userDetailsLoading.hide()
+    }
+  }
+</script>
