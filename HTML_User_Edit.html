@@ -1,0 +1,115 @@
+<script>
+  //job_title,  email, enable_mobile_credential, enable_web_credential
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+
+<label for="user-edit-dd">Choose a User:</label>
+<select class="form-control"  id="user-edit-dd" onchange="userToEditChanged()"></select>
+<br>
+<p id="loading-user-edit"></p>
+<form onsubmit="editUser(event)" id="user-edit-form">
+  <label for="user-job-title-edit">Job Title:</label>
+  <input id ="user-job-title-edit" class="form-control" type="text" name='job_title' placeholder="eg. Accountant."/>
+  <label for="user-email-edit">E-Mail:</label>
+  <input id="user-email-edit" class="form-control" type="email" name='email' placeholder="example@email.com" required/>
+  <!-- https://www.twilio.com/blog/international-phone-number-input-html-javascript -->
+  <label for="phone-edit" style="margin-top: 1rem">Mobile Number:</label>
+  <input id="phone-edit" type="tel" name="mobile"  required>
+  <span class="custom-radio-inp">
+  <span class='custom-radio-label'>Mobile Access:</span>
+  <span class="form-check">
+    <input class="form-check-input" type="radio" name="enable_mobile_credential" id="open-mobile-access-edit" value=true required>
+    <label class="form-check-label" for="open-mobile-access-edit">
+      Give Access!
+    </label>
+  </span>
+  <span class="form-check">
+    <input class="form-check-input" type="radio" name="enable_mobile_credential" id="close-mobile-access-edit" value=false required>
+    <label class="form-check-label" for="close-mobile-access-edit">
+      No Access!
+    </label>
+  </span>
+  </span>
+  <span class="custom-radio-inp">
+  <span class='custom-radio-label'>Web Access:</span>
+  <span class="form-check">
+    <input class="form-check-input" type="radio" name="enable_web_credential" id="open-web-access-edit" value=true required>
+    <label class="form-check-label" for="open-web-access-edit">
+      Give Access!
+    </label>
+  </span>
+  <span class="form-check">
+    <input class="form-check-input" type="radio" name="enable_web_credential" id="close-web-access-edit" value=false required>
+    <label class="form-check-label" for="close-web-access-edit">
+      No Access!
+    </label>
+  </span>
+  </span>
+  <button type="submit" class="btn btn-outline-info" id="edit-user-button">Edit User Details</button>
+</form>
+
+
+<script>
+  let currentUserDetailsEdit = null
+  const phoneEditField = document.querySelector("#phone-edit");
+  const userEditForm = $("#user-edit-form")
+  const userLoadingEdit = $("#loading-user-edit")
+  const userToEdit = $("#user-edit-dd")
+  const userEmailToEdit = $("#user-email-edit")
+  const userJobToEdit = $("#user-job-title-edit")
+  function platformAccess(platf,val){
+    $(`input[name="enable_${platf}_credential"][value="` + val + '"]').prop('checked', true);
+  }
+
+  const phoneEdit = window.intlTelInput(phoneEditField, {
+    utilsScript:
+      "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+  });
+
+
+  function userToEditChanged(){
+    userEditForm.hide()
+    userLoadingEdit.show()
+    userLoadingEdit.text("Loading...")
+    const userId = userToEdit.val()
+
+    google.script.run.withSuccessHandler(userDetailsRetrieved).getUser(userId)
+    function userDetailsRetrieved(userDetails){
+      currentUserDetailsEdit = userDetails
+      userEmailToEdit.val(userDetails.email)
+      userJobToEdit.val(userDetails.job_title)
+      platformAccess("mobile",userDetails.mobile_access)
+      platformAccess("web",userDetails.web_access)
+      phoneEdit.setNumber(userDetails.mobile)
+      userEditForm.show()
+      userLoadingEdit.hide()
+    }
+  }
+
+  function editUser(event){
+    event.preventDefault()
+    const userId = userToEdit.val()
+
+     // Create a FormData object from the form
+    const formData = new FormData(event.target);
+    let payload = {}
+    console.log(currentUserDetailsEdit)
+    for(const [name,value] of formData.entries()){
+      if(currentUserDetailsEdit[name] !== value){
+        if(name ==="enable_mobile_credential" && value !==currentUserDetailsEdit["mobile_access"] || name
+        ==="enable_web_credential" && value !==currentUserDetailsEdit["web_access"]){
+          payload[name] = value;
+        }else{
+          payload[name] = value;
+        }
+      }
+    }
+    console.log(payload)
+    // google.script.run.withSuccessHandler(statusOfUserEdited).updateUser(userId,payload)
+
+    function statusOfUserEdited(status){
+      console.log(status)
+    }
+  }
+</script>
