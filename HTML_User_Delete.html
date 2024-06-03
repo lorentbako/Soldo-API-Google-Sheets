@@ -1,0 +1,34 @@
+<label for="user-delete-dd">Choose a User:</label>
+<select class="form-control" name="user-delete-dd" id="user-delete-dd"></select>
+<br>
+<button onclick="deleteUser()" type="button" class="btn btn-outline-danger" id="delete-user-button">Delete User</button>
+<p id="delete-user-loading" style="display: none"></p>
+
+<script>
+  const deleteLoading = $("#delete-user-loading")
+  const userToDelete = $("#user-delete-dd")
+  const delUserButton = $("#delete-user-button")
+  function deleteUser(){
+    const userId = userToDelete.val()
+    delUserButton.hide()
+    deleteLoading.show()
+    deleteLoading.text("Deleting User...")
+
+    google.script.run.withSuccessHandler(userDeletedStatus).deleteUser(userId)
+
+    function userDeletedStatus(status){
+      if(status){
+        deleteLoading.text("User deleted succesfully!")
+        populateDropdown()
+      }
+      if(!status){
+        deleteLoading.text("User deleting failed!")
+      }
+      setTimeout(()=>{
+        deleteLoading.hide()
+        delUserButton.show()
+        },4000
+      )
+    }
+  }
+</script>
