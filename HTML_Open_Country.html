@@ -1,0 +1,378 @@
+<style>
+  .single-country-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    padding: 0.5rem;
+  }
+
+  .single-country-row:hover {
+    background-color: lightgrey;
+  }
+
+  .country-name {
+    width: 40%;
+  }
+
+  #all-card-countries {
+    column-count: 2;
+    column-gap: 30px;
+    column-rule: 1px solid #ccc;
+  }
+
+  #loading-countries,
+  #update-countries,
+  #search-country {
+    display: none;
+  }
+
+  #search-country {
+    margin-bottom: 1rem;
+  }
+</style>
+
+<label for="cards-country-dd">Choose a card:</label>
+<select class="form-control" name="cards-country-dd" id="cards-country-dd" onchange="handleCCCHange()"></select>
+<br>
+<button type="button" class="btn btn-outline-info" onclick="getListOfOpenCountries()" id="get-countries">Show Countries</button>
+<button type="button" class="btn btn-outline-info" onclick="updateCountriesRule()" id="update-countries" >Update Countries</button>
+<p id="loading-countries">Loading...</p>
+<input class="form-control" type="text" id="search-country" placeholder="Search Country.">
+<div id="all-card-countries">
+</div>
+
+<script>
+  const allCountriesDiv = $("#all-card-countries")
+  const loadingCountries = $("#loading-countries")
+  const searchCountries = $("#search-country")
+  const currentCard = $("#cards-country-dd")
+  const getCountriesButton = $("#get-countries")
+  const updateCountriesButton = $("#update-countries")
+  let allCountriesToUpdate = []
+
+  function handleCCCHange(){
+    allCountriesDiv.html("")
+    getCountriesButton.show()
+    updateCountriesButton.hide()
+    searchCountries.hide()
+  }
+
+  function getListOfOpenCountries(){
+    const cardId = $("#cards-country-dd").val()
+    loadingCountries.show()
+    allCountriesDiv.html("")
+    google.script.run.withSuccessHandler(listCountries).getCuntriesRule(cardId)
+
+    function listCountries(countriesDetails){
+      function oneCountry(country){ 
+        const fullDetails = countries.find(C => C.code === country.code)
+        return `<span class='country-name'>${fullDetails.name}</span>
+        <span class="form-check" onchange="collectCountries(event)">
+          <input class="form-check-input" type="radio" name="country-${fullDetails.name}" id="open-${fullDetails.code}" value=true ${country.enabled ?"checked":""}>
+          <label class="form-check-label" for="open-${fullDetails.code}">
+            Open
+          </label>
+        </span>
+        <span class="form-check" onchange="collectCountries(event)">
+          <input class="form-check-input" type="radio" name="country-${fullDetails.name}" id="close-${fullDetails.code}" value=false ${!country.enabled ?"checked":""}>
+          <label class="form-check-label" for="close-${fullDetails.code}">
+            Closed
+          </label>
+        </span>`
+      }
+      loadingCountries.hide()
+      let notAdded = []
+      countriesDetails.forEach(country =>{
+        if(!countries.find(C => C.code === country.code)){
+          notAdded.push(country)
+          return
+        }
+        const oneC = document.createElement("p")
+        oneC.classList.add("single-country-row")
+        oneC.innerHTML = oneCountry(country)
+        allCountriesDiv.append(oneC)
+      })
+    searchCountries.show()
+    }
+  getCountriesButton.hide()
+  
+  // searchCountries.css("display","block")
+  }
+  function collectCountries(event){
+    updateCountriesButton.show()
+    const clickedRadio = event.target;
+    const countryCode = clickedRadio.id.split("-")[1]
+    const countryStatus = clickedRadio.value
+    const exists = allCountriesToUpdate.find(({code}) =>code===countryCode)
+    if(exists){
+      exists.enabled = countryStatus
+    }
+    if(!exists){
+      allCountriesToUpdate.push({code:countryCode,enabled:countryStatus})
+    }
+  }
+
+  function updateCountriesRule(){
+    updateCountriesButton.hide()
+    loadingCountries.show()
+
+    google.script.run.withSuccessHandler(statusOfUpdate).updateCountries(currentCard.val(), allCountriesToUpdate)
+
+    function statusOfUpdate(status){
+      getListOfOpenCountries()
+      loadingCountries.hide()
+    }
+  }
+
+  $("#search-country").on("keyup", function () {
+    let searchText = $(this).val().toLowerCase();
+    $(".single-country-row .country-name").each(function () {
+      let rowText = $(this).text().toLowerCase();
+      let match = rowText.includes(searchText);
+      if (!match) {
+        $(this).parent().hide();
+      }
+      if (match) {
+        $(this).parent().show(); 
+      }
+    });
+  });
+
+  const countries = [{ name: "Yemen", code: "YEM" },
+    { name: "Isle of Man", code: "IMN" },
+    { name: "Cocos (Keeling) Islands", code: "CCK" },
+    { name: "Turks and Caicos Islands", code: "TCA" },
+    { name: "Curaçao", code: "CUW" },
+    { name: "Libyan Arab Jamahiriya", code: "LBY" },
+    { name: "Christmas Island", code: "CXR" },
+    { name: "Bonaire, Sint Eustatius and Saba", code: "BES" },
+    { name: "Croatia", code: "HRV" },
+    { name: "Togo", code: "TGO" },
+    { name: "Sweden", code: "SWE" },
+    { name: "Pakistan", code: "PAK" },
+    { name: "Cayman Islands", code: "CYM" },
+    { name: "Monaco", code: "MCO" },
+    { name: "Bahamas", code: "BHS" },
+    { name: "Colombia", code: "COL" },
+    { name: "El Salvador", code: "SLV" },
+    { name: "Philippines", code: "PHL" },
+    { name: "Botswana", code: "BWA" },
+    { name: "Tokelau", code: "TKL" },
+    { name: "Hong Kong", code: "HKG" },
+    { name: "Singapore", code: "SGP" },
+    { name: "Korea", code: "KOR" },
+    { name: "Mali", code: "MLI" },
+    { name: "American Samoa", code: "ASM" },
+    { name: "Lithuania", code: "LTU" },
+    { name: "South Africa", code: "ZAF" },
+    { name: "Saint Helena", code: "SHN" },
+    { name: "Namibia", code: "NAM" },
+    { name: "Andorra", code: "AND" },
+    { name: "Nepal", code: "NPL" },
+    { name: "Uruguay", code: "URY" },
+    { name: "Saint Lucia", code: "LCA" },
+    { name: "Luxembourg", code: "LUX" },
+    { name: "Japan", code: "JPN" },
+    { name: "Bolivia", code: "BOL" },
+    { name: "Albania", code: "ALB" },
+    { name: "Montenegro", code: "MNE" },
+    { name: "United States", code: "USA" },
+    { name: "Bosnia and Herzegovina", code: "BIH" },
+    { name: "Papua New Guinea", code: "PNG" },
+    { name: "Latvia", code: "LVA" },
+    { name: "Lebanon", code: "LBN" },
+    { name: "Liberia", code: "LBR" },
+    { name: "Azerbaijan", code: "AZE" },
+    { name: "Spain", code: "ESP" },
+    { name: "Qatar", code: "QAT" },
+    { name: "Oman", code: "OMN" },
+    { name: "Slovakia", code: "SVK" },
+    { name: "Cape Verde", code: "CPV" },
+    { name: "United Kingdom", code: "GBR" },
+    { name: "Antigua and Barbuda", code: "ATG" },
+    { name: "Argentina", code: "ARG" },
+    { name: "Romania", code: "ROU" },
+    { name: "West Bank and Gaza Strip", code: "PSE" },
+    { name: "Jamaica", code: "JAM" },
+    { name: "Maldives", code: "MDV" },
+    { name: "Guinea-Bissau", code: "GNB" },
+    { name: "Mauritania", code: "MRT" },
+    { name: "Iran", code: "IRN" },
+    { name: "Gambia", code: "GMB" },
+    { name: "New Caledonia", code: "NCL" },
+    { name: "Malta", code: "MLT" },
+    { name: "Israel", code: "ISR" },
+    { name: "Lesotho", code: "LSO" },
+    { name: "Lao People's Dem. Rep.", code: "LAO" },
+    { name: "Burkina Faso", code: "BFA" },
+    { name: "Saint Vincent and the Grenadines", code: "VCT" },
+    { name: "Saint Pierre and Miquelon", code: "SPM" },
+    { name: "Slovenia", code: "SVN" },
+    { name: "Ecuador", code: "ECU" },
+    { name: "Nicaragua", code: "NIC" },
+    { name: "Cuba", code: "CUB" },
+    { name: "Kuwait", code: "KWT" },
+    { name: "Portugal", code: "PRT" },
+    { name: "Greece", code: "GRC" },
+    { name: "San Marino", code: "SMR" },
+    { name: "Eritrea", code: "ERI" },
+    { name: "Greenland", code: "GRL" },
+    { name: "Turkmenistan", code: "TKM" },
+    { name: "Kenya", code: "KEN" },
+    { name: "Tajikistan", code: "TJK" },
+    { name: "Anguilla", code: "AIA" },
+    { name: "Faeroe Islands", code: "FRO" },
+    { name: "Madagascar", code: "MDG" },
+    { name: "Liechtenstein", code: "LIE" },
+    { name: "India", code: "IND" },
+    { name: "Jersey", code: "JEY" },
+    { name: "Montserrat", code: "MSR" },
+    { name: "Mongolia", code: "MNG" },
+    { name: "Hungary", code: "HUN" },
+    { name: "Indonesia", code: "IDN" },
+    { name: "Bermuda", code: "BMU" },
+    { name: "Dominica", code: "DMA" },
+    { name: "Niger", code: "NER" },
+    { name: "Fiji", code: "FJI" },
+    { name: "Cameroon", code: "CMR" },
+    { name: "Denmark", code: "DNK" },
+    { name: "Swaziland", code: "SWZ" },
+    { name: "Wallis and Futuna Islands", code: "WLF" },
+    { name: "Thailand", code: "THA" },
+    { name: "Timor-Leste", code: "TLS" },
+    { name: "Belgium", code: "BEL" },
+    { name: "Iceland", code: "ISL" },
+    { name: "Bulgaria", code: "BGR" },
+    { name: "South Sudan", code: "SSD" },
+    { name: "Turkey", code: "TUR" },
+    { name: "Malawi", code: "MWI" },
+    { name: "Guinea", code: "GIN" },
+    { name: "Malaysia", code: "MYS" },
+    { name: "Senegal", code: "SEN" },
+    { name: "Norfolk Island", code: "NFK" },
+    { name: "Saint Kitts and Nevis", code: "KNA" },
+    { name: "Bhutan", code: "BTN" },
+    { name: "Palau", code: "PLW" },
+    { name: "Kazakhstan", code: "KAZ" },
+    { name: "Benin", code: "BEN" },
+    { name: "Aruba", code: "ABW" },
+    { name: "Dominican Republic", code: "DOM" },
+    { name: "Vanuatu", code: "VUT" },
+    { name: "Sao Tome and Principe", code: "STP" },
+    { name: "Chad", code: "TCD" },
+    { name: "New Zealand", code: "NZL" },
+    { name: "Canada", code: "CAN" },
+    { name: "Kyrgyzstan", code: "KGZ" },
+    { name: "Trinidad and Tobago", code: "TTO" },
+    { name: "Equatorial Guinea", code: "GNQ" },
+    { name: "Netherlands", code: "NLD" },
+    { name: "Tunisia", code: "TUN" },
+    { name: "Cyprus", code: "CYP" },
+    { name: "Korea", code: "PRK" },
+    { name: "Venezuela", code: "VEN" },
+    { name: "Guyana", code: "GUY" },
+    { name: "Burundi", code: "BDI" },
+    { name: "Kiribati", code: "KIR" },
+    { name: "Jordan", code: "JOR" },
+    { name: "Australia", code: "AUS" },
+    { name: "Georgia", code: "GEO" },
+    { name: "Central African Republic", code: "CAF" },
+    { name: "Algeria", code: "DZA" },
+    { name: "Guam", code: "GUM" },
+    { name: "Grenada", code: "GRD" },
+    { name: "France", code: "FRA" },
+    { name: "Mozambique", code: "MOZ" },
+    { name: "Estonia", code: "EST" },
+    { name: "Chile", code: "CHL" },
+    { name: "Puerto Rico", code: "PRI" },
+    { name: "Costa Rica", code: "CRI" },
+    { name: "Armenia", code: "ARM" },
+    { name: "Guernsey", code: "GGY" },
+    { name: "Russian Federation", code: "RUS" },
+    { name: "British Virgin Islands", code: "VGB" },
+    { name: "Solomon Islands", code: "SLB" },
+    { name: "Sudan", code: "SDN" },
+    { name: "Niue", code: "NIU" },
+    { name: "Belize", code: "BLZ" },
+    { name: "Italy", code: "ITA" },
+    { name: "Finland", code: "FIN" },
+    { name: "Paraguay", code: "PRY" },
+    { name: "Afghanistan", code: "AFG" },
+    { name: "United Arab Emirates", code: "ARE" },
+    { name: "Peru", code: "PER" },
+    { name: "Congo", code: "COG" },
+    { name: "Honduras", code: "HND" },
+    { name: "Virgin Islands (US)", code: "VIR" },
+    { name: "Cook Islands", code: "COK" },
+    { name: "Sierra Leone", code: "SLE" },
+    { name: "Seychelles", code: "SYC" },
+    { name: "Macau", code: "MAC" },
+    { name: "Uganda", code: "UGA" },
+    { name: "Morocco", code: "MAR" },
+    { name: "Barbados", code: "BRB" },
+    { name: "Ireland", code: "IRL" },
+    { name: "Côte d'Ivoire", code: "CIV" },
+    { name: "Rwanda", code: "RWA" },
+    { name: "Tuvalu", code: "TUV" },
+    { name: "French Polynesia", code: "PYF" },
+    { name: "Egypt", code: "EGY" },
+    { name: "Samoa", code: "WSM" },
+    { name: "Belarus", code: "BLR" },
+    { name: "Panama", code: "PAN" },
+    { name: "Haiti", code: "HTI" },
+    { name: "Bangladesh", code: "BGD" },
+    { name: "Cambodia", code: "KHM" },
+    { name: "Switzerland", code: "CHE" },
+    { name: "Nigeria", code: "NGA" },
+    { name: "Czech Republic", code: "CZE" },
+    { name: "Uzbekistan", code: "UZB" },
+    { name: "Germany", code: "DEU" },
+    { name: "Bahrain", code: "BHR" },
+    { name: "Marshall Islands", code: "MHL" },
+    { name: "Gibraltar", code: "GIB" },
+    { name: "Taiwan", code: "TWN" },
+    { name: "Congo", code: "COD" },
+    { name: "Northern Mariana Islands", code: "MNP" },
+    { name: "Ethiopia", code: "ETH" },
+    { name: "Austria", code: "AUT" },
+    { name: "China", code: "CHN" },
+    { name: "Suriname", code: "SUR" },
+    { name: "Zambia", code: "ZMB" },
+    { name: "Myanmar", code: "MMR" },
+    { name: "Mexico", code: "MEX" },
+    { name: "Mauritius", code: "MUS" },
+    { name: "Saudi Arabia", code: "SAU" },
+    { name: "Sri Lanka", code: "LKA" },
+    { name: "Nauru", code: "NRU" },
+    { name: "Macedonia", code: "MKD" },
+    { name: "Falkland Islands (Malvinas)", code: "FLK" },
+    { name: "Moldova", code: "MDA" },
+    { name: "Guatemala", code: "GTM" },
+    { name: "Angola", code: "AGO" },
+    { name: "Viet Nam", code: "VNM" },
+    { name: "Serbia", code: "SRB" },
+    { name: "Comoros", code: "COM" },
+    { name: "Ghana", code: "GHA" },
+    { name: "Tanzania", code: "TZA" },
+    { name: "Brunei Darussalam", code: "BRN" },
+    { name: "Brazil", code: "BRA" },
+    { name: "Norway", code: "NOR" },
+    { name: "Gabon", code: "GAB" },
+    { name: "Iraq", code: "IRQ" },
+    { name: "Djibouti", code: "DJI" },
+    { name: "Poland", code: "POL" },
+    { name: "Somalia", code: "SOM" },
+    { name: "Ukraine", code: "UKR" },
+    { name: "Zimbabwe", code: "ZWE" },
+    { name: "Syrian Arab Republic", code: "SYR" },
+    { name: "Tonga", code: "TON" },
+    { name: "Micronesia (Federated States of)","code": "FSM"},
+    { name: false,"code": "XXK"},
+    { name: "Pitcairn","code": "PCN"},
+    { name: "Saint Barthélemy","code": "BLM"},
+    { name: "Saint Martin (French part)","code": "MAF"},
+    { name: "Sint Maarten (Dutch part)","code": "SXM"},
+    { name: "Holy See (the)","code": "VAT"}
+    ]
+</script>
