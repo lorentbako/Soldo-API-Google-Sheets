@@ -1,0 +1,62 @@
+<div id="createCardContainer">
+  <label for="users-create-card-dd">Choose a user:</label>
+  <select class="form-control" name="users-create-card-dd" id="users-create-card-dd" onchange="handleWalletChange()"></select>
+  <label for="card-name-create">Enter the Name of CC:</label>
+  <input class="form-control" type="text" id='card-name-create' placeholder="Name of CC" />
+  <label for="card-label-create">Enter the label:</label>
+  <input class="form-control" type="text" id ='card-label-create'placeholder="Label"/>
+  <button onclick="createCard()" type="button" class="btn btn-outline-info">Create Card</button>
+  <p id='card-status-create'> </p>
+</div>
+<script>
+  // CREATE A NEW CARD
+  const cardName = $('#card-name-create');
+  const cardLabel = $('#card-label-create');
+  const usersSelect = $('#users-create-card-dd');
+  const newCardStatus = $('#card-status-create');
+  let walletIdCreate = '';
+  let ownerIdCreate = '';
+
+  function Status(status){
+    newCardStatus.html(status)
+  }
+  function handleWalletChange(){
+    let userPicked = walletsImported.find(({walletId}) => walletId === usersSelect.val() )
+    walletIdCreate = userPicked.walletId
+    ownerIdCreate = userPicked.ownerId
+    if (userPicked.name !== 'EURO - EUR' && userPicked.name !== 'GBP - GBP') {
+      cardName.prop('readonly', true);
+      cardName.val(userPicked.name.split(" - ")[0]);
+    } else {
+      cardName.prop('readonly', false);
+      cardName.val('');
+      cardName.attr('placeholder', 'Name of CC');
+    }
+  }
+
+  function createCard (){
+    const ccName = cardName.val()
+    const ccLabel = cardLabel.val()
+    if(!ccName){
+      Status('Name is Required!')
+      setTimeout(()=>Status(''),3000)
+      return
+    }
+    Status('Creating Card...')
+
+    google.script.run.withSuccessHandler(createStatus).createCardServer(ownerIdCreate,ccName,ccLabel,walletIdCreate)
+    
+    function createStatus(orderId){
+      if(orderId){
+        Status('Card Created Succesfully, getting card..')
+        google.script.run.withSuccessHandler(newCardDetails).cardOrder(orderId)
+      } else {
+        Status('Card Creating failed')
+      }
+      function newCardDetails([name, maskedPan]){
+      Status(`Name: ${name} - ${maskedPan}`)
+      google.script.run.getSoldoCards()
+      }
+    }
+  }
+</script>
