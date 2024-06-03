@@ -1,0 +1,73 @@
+<style>
+  #createCardContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  #createCardContainer input {
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  label {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  select {
+    width: 60%;
+  }
+
+  #loading {
+    display: none;
+    font-size: 16px;
+    color: #666;
+    margin-top: 10px;
+  }
+
+  #cardContainer {
+    margin-top: 10px;
+    width: 280px;
+    height: 176px;
+    background-color: #f2f2f2;
+    border-radius: 5px;
+    padding: 20px;
+    box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  #maskedPan:hover,
+  #expire:hover,
+  #cvv:hover {
+    background-color: white;
+  }
+
+  #maskedPan,
+  #expire,
+  #cvv,
+  #copy-all-cc-details {
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+
+  #expire,
+  #cvv {
+    font-size: 14px;
+    display: inline-block;
+  }
+</style>
