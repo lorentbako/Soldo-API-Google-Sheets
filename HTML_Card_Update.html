@@ -1,0 +1,227 @@
+<style>
+  .spending-limit-row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .card-details-row {
+    margin: 0;
+    padding: 5px 0;
+    border-radius: 0.5rem;
+  }
+
+  #current-assignees,
+  #pills-spending-limits {
+    width: 50%;
+  }
+
+  #current-assignees tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #current-assignees tr {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 10px;
+  }
+
+  #current-assignees tr button {
+    padding: 0 5px;
+  }
+
+  #card-update-dd {
+    margin-bottom: 1rem;
+  }
+
+  #pills-spending-limits>* {
+    margin: 5px 0;
+  }
+</style>
+<label for="card-update-dd">Choose The Card:</label>
+<select onchange="cardSelectedChanged()" class="form-control" name="card-update-dd" id="card-update-dd">
+  <option value="none">Select a Card</option>
+</select>
+<p id='card-update-status'></p>
+<div id="tab-container-div" style="display:none">
+  <ul class="nav nav-pills mb-3" id="pills-tab-update" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="pills-card-details-tab" data-toggle="pill" href="#pills-card-details" role="tab"
+        aria-controls="pills-card-details" aria-selected="true">Details</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="pills-assignee-details-tab" data-toggle="pill" href="#pills-assignee-details" role="tab"
+        aria-controls="pills-assignee-details" aria-selected="false">Assignee</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="pills-spending-limits-tab" data-toggle="pill" href="#pills-spending-limits" role="tab"
+        aria-controls="pills-spending-limits" aria-selected="false">Spending limits (Unfinished)</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="pills-tab-updateContent">
+    <div class="tab-pane fade show active" id="pills-card-details" role="tabpanel"
+      aria-labelledby="pills-card-details-tab">
+      <div id="assigning-section">
+      </div>
+    </div>
+    <div class="tab-pane fade" id="pills-assignee-details" role="tabpanel" aria-labelledby="pills-assignee-details-tab">
+      <div id="all-assignee-details">
+        <p id="total-assignees-status"></p>
+        <table id="current-assignees">
+        </table>
+        <label for="user-assing-dd">Assign a New Employee:</label>
+        <select class="form-control" name="user-assing-dd" id='user-assing-dd'>    </select>
+        <br>
+        <button onclick="modifyAssignees()"  type="button" class="btn btn-outline-info">Assign Employee to Card</button>
+        <p id='is-user-valid' style="color:red"></p>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="pills-spending-limits" role="tabpanel" aria-labelledby="pills-spending-limits-tab">
+      <p id='spending-limits-title'>Spending Limits:</p>
+      <div id="all-spending-limits"></div>
+      <hr>
+      <label for="spending-limit-dd">Add a new rule:</label>
+      <select class="form-control" name="spending-limit-dd" id='spending-limit-dd'>
+        <option value="daily" >Daily</option>
+        <option value="weekly" >Weekly</option>
+        <option value="monthly" >Monthly</option>
+        <option value="perTransaction" >Per Transaction</option>
+      </select>
+      <label for="max-limit-allowed">Enter the maximum spending allowed:</label>
+      <input class="form-control" type="number" id ='max-limit-allowed' placeholder="Max allowed."/>
+      <button onclick="setNewSpendingRule()"  type="button" class="btn btn-outline-info">Set New Rule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  //Container
+  let tabContainer = $('#tab-container-div')
+  //Card details tab
+  let userIdAssign = $('#user-assing-dd')
+  let cardIdAssign = $('#card-update-dd')
+  let updateStatus = $('#card-update-status')
+  //Assigning tab
+  let totalAssigeesStatus = $('#total-assignees-status')
+  let assigningSection = $('#assigning-section')
+  let currentAssingeesDiv = $('#current-assignees')
+  let isUserValid = $('#is-user-valid')
+  let assigneeDetails = $('#all-assignee-details')
+  //Spending tab
+  let limtisTitle = $('#spending-limits-title')
+  let spendingLimitsTab = $("#pills-spending-limits")
+  let allSpendingLimits = $('#all-spending-limits')
+  let newRuleName = $('#spending-limit-dd')
+  let newMaxRule = $('#max-limit-allowed')
+
+  function cardInfoEl(keyInfo,keyValue){
+    const htmlQuery =`<span>${keyInfo}</span><span>${keyValue}</span>`
+    const newInfoEl = document.createElement('p')
+    newInfoEl.classList.add("card-details-row")
+    newInfoEl.innerHTML = htmlQuery
+    assigningSection.prepend(newInfoEl)
+  }
+
+  function cardSelectedChanged(cardDetails) {
+    tabContainer.hide()
+    updateStatus.text("Loading...")
+
+    currentAssingeesDiv.empty()
+    google.script.run
+      .withSuccessHandler(currentCardAssignees)
+      .getSingleCard(cardIdAssign.val());
+    google.script.run
+      .withSuccessHandler(currentSpendingLimits)
+      .getSpendingRules(cardIdAssign.val())
+
+    function currentCardAssignees(card) {
+      if ("creation_time" in card) {
+        const currentAssingees = card.assignees;
+        if (currentAssingees.length > 0) {
+          totalAssigeesStatus.text("Current Assignees:")
+          function assigneEl(name, id) {
+            return `<span>${name}</span><button onclick=modifyAssignees('${id}') class="btn btn-outline-danger">Remove</button>`;
+          }
+          currentAssingees.forEach((assignee) => {
+            let user = usersImported.find((user) => user.userId === assignee);
+            let oneAssignee = document.createElement('tr')
+            oneAssignee.innerHTML = assigneEl(user.name, assignee)
+            currentAssingeesDiv.append(oneAssignee)
+          });
+        } else {
+          totalAssigeesStatus.text("No current Assignee's,\nAssign one below.");
+        }
+      assigningSection.empty()
+      cardInfoEl("Label: ",card["label"])
+      cardInfoEl("Owner Type: ",card["owner_type"])
+      cardInfoEl("Card Type: ",card["type"])
+      cardInfoEl("Created: ",card["creation_time"])
+      cardInfoEl("Currency: ",card["currency_code"])
+      cardInfoEl("Card Status: ",card["active"]?"Active":"Locked")
+      cardInfoEl("Name: ",card["name"])
+
+      } else {
+        //if error
+      }
+      updateStatus.empty()
+    }
+    function currentSpendingLimits(spendingRules){
+      allSpendingLimits.empty()
+      let noRules = true;
+      for(const key in spendingRules){
+        const category = spendingRules[key];
+        if(category.enabled){
+          noRules = false;
+          const limit = document.createElement('p')
+          limit.innerHTML = `<span>${key[0].toUpperCase()+key.slice(1)}</span><span>Limit: ${ category.max}</span><span>Spent: ${ category.spent}</span>`
+          limit.classList.add("spending-limit-row")
+          allSpendingLimits.append(limit)
+        }
+      }
+      if(noRules){
+        limtisTitle.text("No Limits")
+      }
+      if(!noRules){
+        limtisTitle.text("Spending Limits:")
+      }
+      tabContainer.show()
+    }
+  }
+
+  function modifyAssignees(userId){
+  let user = userIdAssign.val()
+  let card = cardIdAssign.val()
+  if(!userId){
+    const regexUserId = /^[A-Z]{4}\d{4}-\d{6}$/
+    if(!regexUserId.test(user)){
+      isUserValid.text("Please select an User.")
+      setTimeout(()=>isUserValid.text(""),3000)
+      return
+    }
+  }
+  let type = null
+  if(userId){
+    user = userId ;
+    type = "remove";
+    updateStatus.text("Removing Assignee...")
+  }else{
+    updateStatus.text("Adding Assignee...")
+  }
+  assigningSection.hide()
+  google.script.run.withSuccessHandler(cardSelectedChanged).modifyAssignee(card,user,type)
+  }
+
+  function setNewSpendingRule(){
+    const ruleName = newRuleName.val()
+    const maxAllowed = newMaxRule.val()
+    const cardId = cardIdAssign.val()
+    
+    
+    google.script.run.withSuccessHandler(ruleUpdateStatus).newSpendingRule(ruleName, maxAllowed, cardId)
+
+    function ruleUpdateStatus(status){
+      console.log(status)
+    }
+  }
+</script>
