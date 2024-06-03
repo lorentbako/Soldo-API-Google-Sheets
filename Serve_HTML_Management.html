@@ -1,0 +1,11 @@
+function doGet() {
+  var htmlOutput = HtmlService.createTemplateFromFile('HTML_Management.html').evaluate()
+  htmlOutput.setWidth(900);
+  htmlOutput.setHeight(800);
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Card's Management");
+}
+
+function loginSidebar() {
+  var htmlOutput = HtmlService.createHtmlOutputFromFile('HTML_Log_in')
+  SpreadsheetApp.getUi().showSidebar(htmlOutput);
+}
